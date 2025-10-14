@@ -48,30 +48,41 @@ def inference():
     Log.Info(mn,f"Method Entered {request}")
     rv = WebResult(0,0,"")
 
-    if request.method != 'POST':
-        Log.Info(mn,"Invalid method")
-        rv.returnValue=1
-        rv.message="Invalid Method"
-        return rv.ToJSON()
-
-    if 'file' not in request.files:
-        Log.Info(mn,"No file posted")
-        rv.returnValue=1
-        rv.message="No file posted"
-        print(rv.message)
-        return rv.ToJSON()
-
-    file=request.files['file']
-    if file.filename == '':
-        Log.Info(mn,"Inavlid filename")
-        rv.returnValue=1
-        rv.message="Invalid filename"
-        return rv.ToJSON()
-
-    imageData=file.read()
-    imageStream=io.BytesIO(imageData)
+    Log.Info(mn,"a")
 
     try:
+
+       if request.method != 'POST':
+           Log.Info(mn,"Invalid method")
+           rv.returnCode=1
+           rv.message="Invalid Method"
+           return rv.ToJSON()
+
+       Log.Info(mn,"b")
+
+       if 'file' not in request.files:
+           Log.Info(mn,"No file posted")
+           rv.returnCode=1
+           rv.message="No file posted"
+           print(rv.message)
+           return rv.ToJSON()
+
+       Log.Info(mn,"1")
+
+
+       file=request.files['file']
+       if file.filename == '':
+           Log.Info(mn,"Inavlid filename")
+           rv.returnCode=1
+           rv.message="Invalid filename"
+           return rv.ToJSON()
+
+       Log.Info(mn,"2")
+
+    
+       Log.Info(mn,"3")
+       imageData=file.read()
+       imageStream=io.BytesIO(imageData)
        img=Image.open(imageStream)
        Log.Info(mn,f"{img.format} {img.mode} {img.width} {img.height}")
 
@@ -84,12 +95,13 @@ def inference():
     except Exception as ex:
        Log.Info(mn,f"EXCEPTION: {ex}")
        rv.message=str(ex)
-       rv.returnValue=1
+       rv.returnCode=1
        #img.close()
        return rv.ToJSON()
 
     Log.Info(mn,"Starting Inference")
     tags=tagger.Inference(img)
+    tags.update(rv.ToDictionary())
     #newFileName=str(uuid.uuid4())
     #file.save(os.path.join(UPLOAD_FOLDER, newFileName))
     Log.Info(mn,f"File tagged {tags}")
