@@ -48,6 +48,9 @@ def test():
 def getimage(request):
     mn="flaskapp::getimage"
     Log.Info(mn,f"Method Entered {request}")
+    #Log.Info(mn,request.get_data(cache=False))
+    #Log.Info(mn,dict(request.form))
+    
     rv = WebResult(0,0,"")
 
     #Log.Info(mn,"a")
@@ -124,7 +127,52 @@ def inference():
     Log.Info(mn,f"Method Entered {request}")
     rv = WebResult(0,0,"")
 
+    caption=0
+    face=0
     #Log.Info(mn,"a")
+    #Check for the form variables
+
+    if 'userid' not in request.form:
+       Log.Info(mn,"Missing userid")
+       rv.returnCode=1
+       rv.message="Missing userid"
+       #print(rv.message)
+       return rv.ToDictionary()
+
+    userid=request.form['userid']
+
+    if 'uniqueid' not in request.form:
+       Log.Info(mn,"Missing uniqueid")
+       rv.returnCode=1
+       rv.message="Missing uniqueid"
+       #print(rv.message)
+       return rv.ToDictionary()
+
+    if 'guid' not in request.form:
+       Log.Info(mn,"Missing guid")
+       rv.returnCode=1
+       rv.message="Missing guid"
+       return rv.ToDictionary()
+
+    guid=request.form['guid']
+
+    if 'name' not in request.form:
+       Log.Info(mn,"Missing filename")
+       rv.returnCode=1
+       rv.message="Missing filename"
+       return rv.ToDictionary()
+
+    filename=request.form['name']
+
+
+    uniqueid=request.form['uniqueid']
+
+    if 'captionswitch' in request.form:
+       caption=int(request.form['captionswitch'])
+
+    if 'facialswitch' in request.form:
+       face=int(request.form['facialswitch'])
+
 
     imgrv=getimage(request)
     if imgrv["returnCode"] != 0:
@@ -135,10 +183,34 @@ def inference():
        return imgrv
 
     img=imgrv["image"]
-    tags=gettags(img)
+    tags = {}
 
-    tags.update(rv.ToDictionary())
-    Log.Info(mn,f"File tagged {tags}")
+    Log.Info(mn,f"Caption {caption} face {face}");
+
+    try:
+
+       if caption==1:
+          tags=gettags(img)
+          tags.update(rv.ToDictionary())
+          Log.Info(mn,f"File tagged {tags}")
+
+       args = {"guid" : guid, "userid" : userid, "uniqueid" : uniqueid, "filename" : filename}
+
+
+       if face==1:
+          #faceArray=FaceProcessor.ToFaceArray(img)
+          faceCoords=FaceProcessor.GetLocations(img, args)
+          tags.update({"facedata" : faceCoords})
+          Log.Info(mn,f"Updated Face Data {tags}");
+
+    except Exception as ex:
+       Log.Info(mn,f"EXCEPTION: {str(ex)}")
+       rv.message=str(ex)
+       rv.returnCode=1
+       #img.close()
+       tags.update(rv.ToDictionary())       
+       
+
     return tags
     
 

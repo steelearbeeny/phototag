@@ -2,9 +2,14 @@ import face_recognition
 import json
 import numpy as np
 from Logger import *
+from PIL import Image
+import os
 
 
 class FaceProcessor:
+
+
+    FACE_DATA_DIR='/opt/faces'
   
     @staticmethod
     def ToFaceArray(image):
@@ -26,8 +31,13 @@ class FaceProcessor:
         return np.array(im)
 
     @staticmethod
-    def GetLocations(faceArray):
+    def GetLocations(img, args):
         mn="FaceProcessor::GetLocations"
+
+        faceArray=FaceProcessor.ToFaceArray(img)
+
+        Log.Info(mn,f"Method Entered {args}")
+        
         face = face_recognition.face_locations(faceArray)
         Log.Info(mn,f"{len(face)} Faces Detected")
         faceCoords=[]
@@ -52,7 +62,37 @@ class FaceProcessor:
             #Pillow crops image with left, top, right, bottom
             #faces come in: top right bottom left order
 
-            faceCoords.append({"facenum" : i, "left" : left, "top" : top , "right" : right, "bottom" : bottom})
+            basepath=f"{FaceProcessor.FACE_DATA_DIR}/{args['userid']}/{args['uniqueid']}/faces"
+
+            os.makedirs(basepath, exist_ok=True)
+            
+
+
+            enc=face_recognition.face_encodings(faceArray,[f],1,"small")
+
+
+
+            filename=f"{basepath}/{args['userid']}_{args['uniqueid']}_{args['guid']}_face{i}_{args['filename']}"
+            
+            cropped = img.crop((left, top, right, bottom))
+
+            cropped.save(filename)
+
+            npfilename, npext=os.path.splitext(filename)
+
+            npfilename=npfilename + '.npy'
+
+            
+            np.save(npfilename,enc)
+
+            faceCoords.append({
+                                "facenum" : i,
+                                "left" : left,
+                                "top" : top ,
+                                "right" : right,
+                                "bottom" : bottom,
+                                "facefile" : filename,
+                                "encfile" : npfilename})
 
 
             #enc=face_recognition.face_encodings(image,[f],1,"small")

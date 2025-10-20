@@ -110,6 +110,10 @@ class ImageTagger:
             Log.Info(mn,"Inference complete")
             tagArray=res[0].split(' | ')
             caption=res[2]
+
+            if caption:
+                caption = caption[0].upper() + caption[1:]
+            
             Log.Info(mn,tagArray);
 
         except Exception as ex:
