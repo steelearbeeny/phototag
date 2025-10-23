@@ -186,27 +186,33 @@ def inference():
     tags = {}
 
     Log.Info(mn,f"Caption {caption} face {face}");
+    processingStatus=[-1,-1]
 
     try:
 
        if caption==1:
+          processingStatus[0]=1
           tags=gettags(img)
           tags.update(rv.ToDictionary())
           Log.Info(mn,f"File tagged {tags}")
+          processingStatus[0]=0
 
        args = {"guid" : guid, "userid" : userid, "uniqueid" : uniqueid, "filename" : filename}
 
 
        if face==1:
           #faceArray=FaceProcessor.ToFaceArray(img)
+          processingStatus[1]=1
           faceCoords=FaceProcessor.GetLocations(img, args)
           tags.update({"facedata" : faceCoords})
           Log.Info(mn,f"Updated Face Data {tags}");
+          processingStatus[1]=0
 
     except Exception as ex:
        Log.Info(mn,f"EXCEPTION: {str(ex)}")
        rv.message=str(ex)
-       rv.returnCode=1
+       rv.returnCode=processingStatus[0]
+       rv.returnCode2=processingStatus[1]
        #img.close()
        tags.update(rv.ToDictionary())       
        
